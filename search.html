@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serach in UDDOG</title>
+    <style>
+       
+        body{
+            background-color: #ffffff; /* Light gray */
+        }
+        .srch {
+            display: flex;
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            width: 100vw;
+            height: 8vh;
+            top: 0px;
+            border-bottom: 1px solid rgb(0, 0, 0);
+            border-radius: 0 0 10px 10px;
+            z-index: 2;
+        }
+        .srch input{
+            margin: 3px;
+        }
+        
+        #filterType {
+            padding: 5px;
+            text-align: center;
+            border: none;
+            color: rgb(0, 0, 0);
+            background-color: transparent;
+            outline: none;
+            border: 1px solid rgb(0, 0, 0);
+        }
+        #filterType option{
+            background-color: rgb(0, 0, 0);
+            color: white;
+        }
+        #infoFilter {
+            font-weight: bold;
+            padding: 5px;
+            text-align: center;
+            border: none;
+            background-color: transparent;
+            border: solid 1px rgb(0, 0, 0);
+            color: rgb(2, 2, 2);
+            outline: none;
+        }
+        #infoFilter::placeholder{
+            text-align: center;
+            color: rgb(4, 4, 4);
+        }
+        
+        input[type="checkbox"] {
+            appearance: none;
+            background-color: transparent;
+            width: 1.6rem;
+            height: 1.6rem;
+            border: solid 1px rgb(8, 8, 8);
+        }
+        
+        input[type="checkbox"]:checked {
+          background-color: rgb(9, 9, 9); 
+        }
+        
+        #info {
+            display: flex;
+            margin-top: 10vh;
+            justify-content: center;
+            flex-wrap: wrap;
+
+        }
+        .imgp{
+            text-align: center;
+            margin: 10px;
+            border-bottom: 1px solid rgb(0, 0, 0);
+        }
+        #info>div {
+            line-height: 1.3rem;
+            margin: 7px;
+            border: 1px solid #0a0a0a;
+            background-color: white;
+            width: 300px;
+            padding: 15px;
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            font-size: 0.8rem;
+         }
+        #info div p {
+           font-weight: bolder;
+        }
+        
+        #info div img {
+            border: 3px solid white;
+            border-radius: 50%;
+            padding: 4px;       
+            width: 100px;
+            height: 100px;
+        }
+        @media only screen and (max-width: 600px) {
+            #info>div {
+               width: 85vw;
+          }
+        }
+        
+        .availability-count {
+            margin-top: 10vh;
+            position: fixed;
+            font-weight: bolder;
+            right: 0px;
+            top: 20px;
+            font-size: 1.3rem;
+            color: rgb(255, 255, 255);
+            border-radius: 10px 0px 0px 10px;
+            padding: 3px 10px;
+            background-color: rgb(10, 10, 10);
+        }
+
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        
+
+
+    </style>
+</head>
+
+<body>
+
+    <div id="loading-screen">
+        <div class="loading-spinner"></div>
+    </div>
+
+
+
+
+    <div class="srch">
+        <label for="filterType"></label>
+        <select id="filterType">
+            <option value="name">Name</option>
+            <option value="address">Address</option>
+            <option value="bloodGroup">Blood Group</option>
+        </select>
+        <label for="infoFilter"></label>
+        <input placeholder="Search" type="text" id="infoFilter" oninput="filterData()">
+        <input type="checkbox" id="availabilityCheckbox" onchange="filterData()">
+        <div class="availability-count" id="availabilityCount"></div>
+    </div>
+
+
+
+    
+    <div id="content" style="display: none;">
+        <div id="info">
+            <!-- User information will be displayed here -->
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script>
+        let allInfo = [];
+        let filterType = "name";
+        async function fetchUserData() {
+            try {
+                // Show loading screen
+                document.getElementById('loading-screen').style.display = 'flex';
+        
+                // Retrieve data from local storage
+                const csvData = localStorage.getItem('PrivteData');
+        
+                // Process data if found
+                if (csvData) {
+                    const rows = csvData.split('\n').map(row => row.split(','));
+        
+                    allInfo = rows.slice(1).map(row => ({
+                        name: row[1].trim(), // Name is in column 1
+                        address: row[4].trim(), // Address is in column 4
+                        bloodGroup: row[3].trim(), // Blood Group is in column 3
+                        imgSrc: row[0].trim(), // ImgSrc is in column 0
+                        phoneNumber: row[2].trim(), // Phone Number is in column 2
+                        donationDate: new Date(row[8].trim()), // Donation Date is in column 8
+                    })).filter(entry => entry.name !== '' && entry.address !== '');
+        
+                    // Hide loading screen and display content
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById("content").style.display = "block";
+                    displayInfo();
+                } else {
+                    console.error('CSV data not found in local storage.');
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+        
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        function displayInfo(data = allInfo) {
+            const infoContainer = document.getElementById("info");
+            infoContainer.innerHTML = "";
+        
+            data.forEach(entry => {
+                const timeLeft = calculateTimeLeft(entry.donationDate);
+                const isAvailable = timeLeft === "Available for Blood Donation";
+        
+                const entryDiv = document.createElement("div");
+                
+                const availabilityText = isAvailable
+                    ? "Available for Blood Donation"
+                    : `Next Blood Donate in ${timeLeft}`;
+        
+                entryDiv.innerHTML = `
+                    <div class="imgp">
+                    <img src="${entry.imgSrc}" alt="Profile Image" id="ppimg"><br>
+                    <p>${entry.name}</p>
+                    </div>
+                    Live in ${entry.address}<br>
+                    <span class="click-to-copy" onclick="copyToClipboard('${entry.phoneNumber}')">${entry.phoneNumber}</span><br>
+                    Blood Group ${entry.bloodGroup}<br>
+                    ${availabilityText}
+                `;
+        
+                infoContainer.appendChild(entryDiv);
+            });
+        
+            updateAvailabilityCount(data.length);
+        }
+        
+        function calculateTimeLeft(donationDate) {
+            const lastDonationDate = new Date(donationDate);
+            const nextDonationDate = new Date(lastDonationDate);
+            nextDonationDate.setMonth(lastDonationDate.getMonth() + 4); // Add 4 months for next donation eligibility
+        
+            const currentDate = new Date();
+            const timeLeftInMilliseconds = nextDonationDate - currentDate;
+        
+            if (timeLeftInMilliseconds <= 0) {
+                return "Available for Blood Donation";
+            }
+        
+            // Calculate the remaining time in months and days
+            const monthsLeft = Math.floor(timeLeftInMilliseconds / (1000 * 60 * 60 * 24 * 30));
+            const daysLeft = Math.floor((timeLeftInMilliseconds % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
+        
+            return `${monthsLeft} months and ${daysLeft} days`;
+        }
+        
+        function filterData() {
+            const filterText = document.getElementById('infoFilter').value.toLowerCase();
+            const availabilityCheckbox = document.getElementById('availabilityCheckbox').checked;
+        
+            const filteredInfo = allInfo.filter(entry => {
+                const matchesSearch = entry[filterType].toLowerCase().includes(filterText);
+                const isAvailable = calculateTimeLeft(entry.donationDate) === "Available for Blood Donation";
+        
+                if (availabilityCheckbox) {
+                    return matchesSearch && isAvailable;
+                } else {
+                    return matchesSearch;
+                }
+            });
+        
+            displayInfo(filteredInfo);
+        }
+        
+        
+
+        function copyToClipboard(text) {
+            const dummyElement = document.createElement("textarea");
+            document.body.appendChild(dummyElement);
+            dummyElement.value = text;
+            dummyElement.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummyElement);
+        }
+
+        function updateAvailabilityCount(count) {
+            const availabilityCountElement = document.getElementById("availabilityCount");
+
+            if (count > 0) {
+                availabilityCountElement.textContent = `${count}`;
+            } else {
+                availabilityCountElement.textContent = "0";
+            }
+        }
+
+        document.getElementById('filterType').addEventListener('change', function () {
+            filterType = this.value;
+            filterData();
+        });
+
+        fetchUserData();
+    </script>
+    <script src="main.js"></script>
+</body>
+
+</html>

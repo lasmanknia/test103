@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number and Pincode Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@1.21.0/dist/full.css" rel="stylesheet">
+</head>
+<body class="bg-base-200 flex items-center justify-center min-h-screen">
+    <div class="card w-96 bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">Number and Pincode Form</h2>
+            <form id="dataForm">
+                <!-- Number Input -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Phone Number</span>
+                    </label>
+                    <input type="tel" placeholder="Enter your phone number(without 0)" class="input input-bordered" id="phone" required>
+                </div>
+
+                <!-- Pincode Input -->
+                <div class="form-control mt-4">
+                    <label class="label">
+                        <span class="label-text">Pincode</span>
+                    </label>
+                    <input type="text" placeholder="Enter your pincode" class="input input-bordered" id="pincode" required>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="form-control mt-4">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+    <script>
+        document.getElementById("dataForm").addEventListener("submit", function(event) {
+            event.preventDefault();  // Prevent default form submission
+
+            // Get form data
+            const phone = document.getElementById("phone").value;
+            const pincode = document.getElementById("pincode").value;
+
+            // Your Google Apps Script Web App URL
+            const scriptURL = "https://script.google.com/macros/s/AKfycbz8PDd_th4tSk-D7KOKLXMVJ4kSE2sWZnF-mWFQveIY6kcJC_I3PUgEfVRvcgm9-2aX/exec";  // Replace with your script URL
+
+            // Send the data to the Google Apps Script
+            fetch(scriptURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    'phone': phone,
+                    'pincode': pincode
+                })
+            })
+            .then(response => response.text())
+            .then(result => {
+                console.log('Success:', result);
+                alert(result);  // Alert success or any message returned by Apps Script
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error submitting the form.');
+            });
+        });
+    </script>
+</body>
+</html>
